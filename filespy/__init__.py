@@ -1,5 +1,4 @@
 import os
-import itertools
 
 
 CREATED = 0
@@ -10,29 +9,23 @@ MODIFIED = 2
 def _walk(top, followlinks, prefix=None):
     try:
         names = os.listdir(top)
-    except Exception as e:
-        yield None, None, None, e
-        return
+    except Exception:
+        raise StopIteration()
 
-    dirs, nondirs = [], []
     prefix = prefix or []
 
-    for name in names:
-        if os.path.isdir(os.path.join(top, name)):
-            dirs.append(name)
-        else:
-            nondirs.append(name)
+    yield os.path.sep.join(prefix), names
 
-    for name in dirs:
+    for name in names:
         new_path = os.path.join(top, name)
+        if not os.path.isdir(new_path):
+            continue
+
         new_prefix = list(prefix)
         new_prefix.append(name)
         if followlinks or not os.path.islink(new_path):
-            for prefix, dirs, nondirs, err in _walk(new_path,
-                                                    followlinks,
-                                                    new_prefix):
-                yield prefix, dirs, nondirs, err
-    yield os.path.sep.join(prefix), dirs, nondirs, None
+            for root, files in _walk(new_path, followlinks, new_prefix):
+                yield root, files
 
 
 def make_snapshot(path, followlinks=False):
@@ -51,11 +44,13 @@ def make_snapshot(path, followlinks=False):
                          .format(path))
 
     result = {}
-    for prefix, dirs, files in _walk(path, followlinks):
-        for f in itertools.chain(dirs, files):
+    for prefix, files in _walk(path, followlinks):
+        for f in files:
             p = os.path.join(prefix, f)
             fullpath = os.path.join(path, p)
             result[p] = os.stat(fullpath)
+
+    return result
 
 
 def snapshot_diff(s1, s2):
