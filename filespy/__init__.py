@@ -48,7 +48,10 @@ def make_snapshot(path, followlinks=False):
         for f in files:
             p = os.path.join(prefix, f)
             fullpath = os.path.join(path, p)
-            result[p] = os.stat(fullpath)
+            try:
+                result[p] = os.stat(fullpath)
+            except FileNotFoundError:
+                pass
 
     return result
 

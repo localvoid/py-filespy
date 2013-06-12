@@ -1,10 +1,7 @@
 #!/usr/bin/env python
 
 PROJECT = 'filespy'
-VERSION = '1.0'
-
-import distribute_setup
-distribute_setup.use_setuptools()
+VERSION = '1.1'
 
 from setuptools import (
     setup,
